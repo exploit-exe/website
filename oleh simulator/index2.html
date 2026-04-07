@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The Waiting Room</title>
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        background: linear-gradient(135deg, #2f323a, #1a1c20);
+        font-family: 'Segoe UI', sans-serif;
+        color: #ddd;
+        height: 100vh;
+        position: relative;
+    }
+
+    .timer {
+        position: absolute;
+        left: 40px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-family: 'Georgia', serif;
+       
+        color: #aaa;
+        max-width: 200px;
+        line-height: 1.6;
+        font-size: 1.2rem;
+    }
+    .countdown {
+        position: absolute;
+        right: 40px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-family: 'Georgia', serif;
+        font-size: 1.2rem;
+        
+        color: #aaa;
+        max-width: 200px;
+        line-height: 1.6;
+        text-align: right;
+    }
+
+    .app-container {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 30%;
+        height: 90vh;
+        max-height: 800px;
+        background-color: #212328;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        
+    }
+
+    .chat-window {
+        flex: 1;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    .message {
+        padding: 10px 14px;
+        border-radius: 18px;
+        margin-bottom: 10px;
+        max-width: 70%;
+        word-wrap: break-word;
+        line-height: 1.4;
+        font-size: 0.95em;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .user {
+        background-color: #4e9ef8;
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 4px;
+    }
+
+    .typing {
+        background-color: #2b2f36;
+        align-self: flex-start;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 10px 16px;
+        font-style: italic;
+        border-bottom-left-radius: 4px;
+        height: 34px;
+    }
+
+    .dot {
+        width: 6px;
+        height: 6px;
+        background-color: #aaa;
+        border-radius: 50%;
+        opacity: 0;
+        animation: blink 1.2s infinite;
+    }
+
+    .dot:nth-child(1) { animation-delay: 0s; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes blink {
+        0%, 80%, 100% { opacity: 0; }
+        40% { opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .input-bar {
+        display: flex;
+        padding: 14px;
+        background-color: #1a1c20;
+        border-top: 1px solid #2c2f34;
+        gap: 10px;
+    }
+
+    input {
+        flex: 1;
+        padding: 10px 12px;
+        font-size: 1em;
+        border-radius: 18px;
+        border: none;
+        background-color: #2c2f34;
+        color: #fff;
+        outline: none;
+    }
+
+    .input-bar button {
+        padding: 10px 16px;
+        background-color: #4e9ef8;
+        border: none;
+        border-radius: 50px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+    .input-bar button:hover {
+        background-color: #398be3;
+    }
+    @media (max-width: 480px) {
+    .center-message {
+        width: 90%;
+        padding: 10px;
+        font-size: 1rem;
+    }
+    .app-container {
+        width: 95%;
+        height: 90vh;
+    }
+}
+    @media (max-width: 768px) {
+        .timer {
+            position: relative;
+            text-align: center;
+            left: 0;
+            top: auto;
+            transform: none;
+            padding: 20px;
+        }
+
+        .app-container {
+            position: relative;
+            top: auto;
+            left: auto;
+            transform: none;
+            margin: 0 auto;
+            margin-top: 20px;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+
+    .chat-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        background-color: #1f2024;
+        border-bottom: 1px solid #2c2f34;
+    }
+
+    .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        margin-right: 12px;
+        object-fit: cover;
+    }
+
+    .chat-info {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+
+    .name {
+        font-weight: bold;
+        font-size: 0.95em;
+        color: #eee;
+    }
+
+    .status {
+        font-size: 0.75em;
+        color: #888;
+        font-style: italic;
+    }
+
+    
+    body.early-internet {
+        font-family: "Times New Roman", serif;
+        color: #000;
+        text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
+        background: linear-gradient(to top, #000000, #000000, #333333, #333333);
+        background-size: cover;
+        background-size: 100% 2px;
+        animation: scanlines infinite 20s linear, textflicker infinite 0.01s alternate;
+    }
+    @keyframes scanlines {
+        from {
+            background-position: 0 0;
+        }
+        to {
+            background-position: 0 -10px;
+        }
+    }
+    @keyframes textflicker {
+        from {
+        text-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
+        }
+        to {
+        text-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
+        }
+    }
+
+    .early-internet .app-container {
+        background: #fff;
+        border: 2px solid #000;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .early-internet .chat-header,
+    .early-internet .chat-window,
+    .early-internet .input-bar {
+        font-family: "Times New Roman", serif;
+        background: none;
+        padding: 10px;
+    }
+
+    .early-internet .avatar {
+        border-radius: 0;
+        width: 32px;
+        height: 32px;
+        margin-right: 10px;
+    }
+
+    .early-internet .name {
+        font-family: "Times New Roman", serif;
+        font-weight: bold;
+        font-size: 1em;
+        color: #000;
+    }
+
+    .early-internet .status {
+        font-family: "Times New Roman", serif;
+        font-size: 0.8em;
+        color: #555;
+        font-style: normal;
+    }
+
+    .early-internet .message {
+        background-color: #ececec;
+        border: 1px solid #666;
+        color: #000;
+        font-family: "Times New Roman", serif;
+        padding: 6px;
+        border-radius: 0;
+    }
+
+    .early-internet .typing {
+        background-color: #ececec;
+        color: #000;
+        border: 1px solid #666;
+        padding: 6px;
+    }
+
+    .early-internet input {
+        all: revert;
+        flex: 1;
+        padding: 10px 12px;
+        font-size: 1em;
+        font-family: "Times New Roman", serif;
+    }
+
+    .early-internet button {
+        all: revert;
+        padding: 10px 16px;
+        cursor: pointer;
+        font-weight: bold;
+        font-family: "Times New Roman", serif;
+    }
+    
+    
+    @keyframes screenShake {
+        0%, 100% { transform: translate(0); }
+        25% { transform: translate(4px, -4px); }
+        50% { transform: translate(-5px, 3px); }
+        75% { transform: translate(4px, 4px); }
+    }
+    @keyframes messageShake {
+        0%, 100% { transform: translate(-50%, -50%) translate3d(0, 0, 0); }
+        20% { transform: translate(-50%, -50%) translate3d(-1px, 1px, 0); }
+        40% { transform: translate(-50%, -50%) translate3d(2px, 3px, 0); }
+        60% { transform: translate(-50%, -50%) translate3d(-3px, 2px, 0); }
+        80% { transform: translate(-50%, -50%) translate3d(-1px, -1px, 0); }
+    }
+    @keyframes messageShakeEnding {
+        0%, 100% { transform: translate(0); }
+        25% { transform: translate(4px, -4px); }
+        50% { transform: translate(-5px, 3px); }
+        75% { transform: translate(4px, 4px); }
+    }
+    @keyframes crtFlicker {
+        0%, 100% { opacity: 1; }
+        5% { opacity: 0; }
+        10% { opacity: 1; }
+        15% { opacity: 0; }
+        20% { opacity: 1; }
+        30% { opacity: 0; }
+        40% { opacity: 1; }
+        50% { opacity: 0; }
+        60% { opacity: 1; }
+        70% { opacity: 0; }
+        80% { opacity: 1; }
+        90% { opacity: 0; }
+    }
+
+    .glitch-effect {
+        animation: screenShake 0.2s;
+        animation-iteration-count: 20;
+        
+    }
+
+    .crt-flicker {
+        animation: crtFlicker 0.2s;
+        animation-iteration-count: 20;
+
+    }
+    .screen-wrapper {
+        position: relative;
+        height: 100vh;
+        width: 100vw;
+        
+    }
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: auto;
+    }
+    #muteButton{
+        position: absolute; 
+        padding: 10px 16px;
+        display: none; 
+        z-index: 2;
+    }
+    .center-message {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 360px;
+        padding: 20px;
+        transform: translate(-50%, -50%);
+        background: rgba(255,255,255,0.9);
+        color: #000;
+        font-family: 'Georgia', serif;
+        font-size: 1.2em;
+        text-align: center;
+        opacity: 0;
+        pointer-events: none;
+        border: 2px solid #333;
+        z-index: 10;
+        mix-blend-mode: difference;
+        will-change: transform, opacity;
+        contain: layout paint style;
+    }
+    .blackout-overlay {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        opacity: 0;
+        transition: opacity 2s ease;
+        z-index: 100000;
+        pointer-events: none;
+    }
+    .intro-disclaimer {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(0, 0, 0, 0.88);
+        z-index: 100001;
+    }
+    .intro-disclaimer__panel {
+        width: min(560px, 100%);
+        padding: 28px;
+        border: 1px solid rgba(255,255,255,0.18);
+        background: rgba(20, 22, 26, 0.96);
+        box-shadow: 0 24px 80px rgba(0,0,0,0.45);
+        color: #f0f0f0;
+        font-family: 'Georgia', serif;
+    }
+    .intro-disclaimer__title {
+        margin: 0 0 18px;
+        font-size: 1.15rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+    .intro-disclaimer__list {
+        margin: 0;
+        padding: 0 0 0 18px;
+        line-height: 1.7;
+        font-size: 1rem;
+    }
+    .intro-disclaimer__hint {
+        margin: 18px 0 0;
+        color: #b8b8b8;
+        font-size: 0.92rem;
+    }
+    .message.response {
+        background-color: #555;
+        color: #eee;
+        align-self: flex-start;
+        border-bottom-left-radius: 4px;
+    }
+
+    .early-internet .message.response {
+        background: none;
+        border: 1px solid #666;
+        color: #000;
+        padding: 6px;
+        border-radius: 0;
+    }
+
+
+    
+
+    
+
+
+</style>
+</head>
+<body>
+<div class="screen-wrapper">
+    <div id="centerMessage" class="center-message"></div>
+<button id="muteButton">
+    Mute Tick
+</button>
+<div class="timer">
+    <span>You've been waiting:</span><br>
+    <span id="timeText">0m 0s</span>
+</div>
+
+
+<div class="app-container">
+    <div class="chat-header">
+        <img src="static_noise2.gif" alt="avatar" class="avatar" />
+        <div class="chat-info">
+            <div class="name">gem mine</div>
+            <div class="status">offline</div>
+        </div>
+    </div>
+    <div class="chat-window" id="chat">
+        <div class="message user">don't forget to check out that song i sent you earlier</div>
+        <div class="message typing" id="typing">
+            typing<span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+        
+
+    </div>
+    <div class="input-bar">
+        <input type="text" id="input" placeholder="Say something please..."/>
+        <button id="sendBtn">Send</button>
+    </div>
+</div>
+<div class="countdown">
+    <span id="countdownText2">Reward in:</span><br>
+    <span id="countdownText">0m 0s</span>
+</div>
+
+<audio id="tickSound" src="click.mp3" preload="auto"></audio>
+<audio id="noiseSound" src="noise.mp3" preload="auto"></audio>
+<audio id="ambientAudio" src="ambient3.mp3" preload="auto" loop autoplay></audio>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const ambient = document.getElementById("ambientAudio");
+  const disclaimer = document.createElement("div");
+  disclaimer.className = "intro-disclaimer";
+  disclaimer.innerHTML = `
+    <div class="intro-disclaimer__panel">
+      <h2 class="intro-disclaimer__title">Before You Start</h2>
+      <ul class="intro-disclaimer__list">
+        <li>allow audio access if asked</li>
+        <li>use your headphones</li>
+        <li>increase volume to at least 50%</li>
+        <li>use the space bar or left mouse click to move to the next part of the monologue</li>
+        <li>please do not modify the page code</li>
+        <li>do NOT reload the page, progress will be lost</li>
+        <li>take your time, no need to rush</li>
+      </ul>
+      <p class="intro-disclaimer__hint">Click anywhere to continue...</p>
+    </div>
+  `;
+  document.body.appendChild(disclaimer);
+
+  disclaimer.addEventListener("click", () => {
+    disclaimer.remove();
+  });
+
+  
+  ambient.play().catch(() => {
+    
+    const prompt = document.createElement("div");
+    prompt.textContent = "Click anywhere to enable sound";
+    prompt.style = `
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.85);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4em;
+      z-index: 10000;
+      text-align: center;
+      cursor: pointer;
+    `;
+    document.body.appendChild(prompt);
+
+    prompt.addEventListener("click", () => {
+      ambient.play().then(() => {
+        document.body.removeChild(prompt);
+      }).catch(err => {
+        prompt.textContent = "Autoplay failed. Please refresh and allow audio.";
+      });
+    });
+  });
+});
+
+const input = document.getElementById("input");
+const chat = document.getElementById("chat");
+const sendBtn = document.getElementById("sendBtn");
+const timeText = document.getElementById("timeText");
+const typingBubble = document.getElementById("typing");
+typingBubble.style.display = 'none';
+const tickSound = document.getElementById("tickSound");
+const noiseSound = document.getElementById("noiseSound");
+const screenWrapper = document.querySelector(".screen-wrapper");
+const countdownText = document.getElementById("countdownText");
+const countdownText2 = document.querySelector("#countdownText2");
+const muteButton = document.getElementById("muteButton");
+const status = document.querySelector('.status');
+let hoverCount = 0;
+const maxHovers = 20;
+let centerMessage = document.getElementById('centerMessage');
+const returnAfterLinkStorageKey = 'waiting-room-return-after-link';
+const returnAfterLinkMessages = [
+    "attachment is the root of all misery, they say",
+"but there is a beauty in being attached to the person you love",
+"the first thing i think about when i wake up is you",
+"the first thing i do when i wake up is checking messages from you",
+"and it brings me an immense joy when there is something you've sent me",
+"whenever i see a new message i always hope it's yours",
+"also the day i woke up next to you i realized that i want it to happen every day",
+"in fact it was the best thing that ever happened to me",
+"today i had a dream where i was just sleeping near you",
+"i was feeling so happy",
+"sometimes when i'm happy i feel your presence",
+"i love you so much",
+"and i really hope that your love for me is just as strong as mine to you",
+"every day i tell the sun to kiss your face for me",
+"i am sorry for making you go through all of this.",
+"and i am very sorry if at any point i made you feel bad",
+"i didn't mean to",
+"i love you",
+"please, turn on the light in your room, it is important, i promise",
+"and now take a look at the person i love the most"
+];
+
+let lastSecond = -1;
+let styleSwitched = false;
+let minutes;
+let seconds;
+let intervalId;
+let diff = 0;
+let congrats1Trigger = false;
+let countdown1Diff = 300;
+let countdown2Diff = 300;
+let countdown3Diff = 600;
+let countdown4Diff = 600;
+let countdown5Diff = 600;
+// let countdown1Diff = 5;
+// let countdown2Diff = 5;
+// let countdown3Diff = 20;
+// let countdown4Diff = 90;
+// let countdown5Diff = 90;
+
+let countdownMinutes;
+let countdownSeconds;
+let centeredMessageQueue = [];
+let centeredMessageTypingTimeoutId;
+let centeredMessageSequenceTimeoutId;
+let centeredMessageDelayTimeoutId;
+let centeredMessageNoiseTimeoutId;
+let endingNoiseTimeoutId;
+let centeredMessageActive = false;
+let centeredMessageTransitionPending = false;
+let centeredMessageAfterAdvance;
+let centeredMessageAfterAdvanceDelay = 0;
+let returnAfterLinkMessagesShown = false;
+const centeredMessageEffectDuration = 5000;
+const centeredMessageNoiseVolume = 0.25;
+
+
+function playTick() {
+    tickSound.currentTime = 0;
+    tickSound.play().catch(() => {});
+}
+
+function stopTickingClock() {
+    clearInterval(intervalId);
+    tickSound.pause();
+    tickSound.currentTime = 0;
+}
+
+function stopCenteredMessageNoise() {
+    clearTimeout(centeredMessageNoiseTimeoutId);
+    clearTimeout(endingNoiseTimeoutId);
+    noiseSound.loop = false;
+    noiseSound.pause();
+    noiseSound.currentTime = 0;
+}
+
+function playCenteredMessageNoise() {
+    stopCenteredMessageNoise();
+    noiseSound.volume = centeredMessageNoiseVolume;
+    noiseSound.currentTime = 0;
+    noiseSound.play().catch(() => {});
+    centeredMessageNoiseTimeoutId = setTimeout(() => {
+        stopCenteredMessageNoise();
+    }, centeredMessageEffectDuration);
+}
+
+function playEndingNoise(duration) {
+    stopCenteredMessageNoise();
+    noiseSound.volume = centeredMessageNoiseVolume;
+    noiseSound.loop = true;
+    noiseSound.currentTime = 0;
+    noiseSound.play().catch(() => {});
+    endingNoiseTimeoutId = setTimeout(() => {
+        noiseSound.loop = false;
+        stopCenteredMessageNoise();
+    }, duration);
+}
+
+function fadeToBlackScreen() {
+    const centerMessageEl = ensureCenterMessageElement();
+    clearTimeout(centeredMessageTypingTimeoutId);
+    clearTimeout(centeredMessageDelayTimeoutId);
+    centerMessageEl.style.transition = 'opacity 1.2s ease';
+    centerMessageEl.style.opacity = '0';
+    centeredMessageActive = false;
+    centeredMessageTransitionPending = true;
+    centeredMessageAfterAdvance = null;
+    centeredMessageAfterAdvanceDelay = 0;
+
+    setTimeout(() => {
+        centerMessageEl.textContent = '';
+        centerMessageEl.style.animation = '';
+        centerMessageEl.style.transition = '';
+    }, 1200);
+
+    const blackoutOverlay = document.createElement('div');
+    blackoutOverlay.className = 'blackout-overlay';
+    document.body.appendChild(blackoutOverlay);
+
+    setTimeout(() => {
+        requestAnimationFrame(() => {
+            blackoutOverlay.style.opacity = '1';
+        });
+    }, 200);
+
+    setTimeout(() => {
+        document.body.innerHTML = '';
+        document.body.style.background = '#000';
+    }, 2200);
+}
+
+function ensureCenterMessageElement() {
+    if (centerMessage && document.body.contains(centerMessage)) {
+        return centerMessage;
+    }
+
+    centerMessage = document.createElement('div');
+    centerMessage.id = 'centerMessage';
+    centerMessage.className = 'center-message';
+    const messageHost = document.querySelector('.screen-wrapper') || document.body;
+    messageHost.appendChild(centerMessage);
+    return centerMessage;
+}
+
+
+
+function sendMessage() {
+    const val = input.value.trim();
+    if (val) {
+        const msg = document.createElement("div");
+        msg.className = "message user";
+        msg.textContent = val;
+        chat.insertBefore(msg, typingBubble);
+        input.value = "";
+        chat.scrollTop = chat.scrollHeight;
+    }
+}
+
+
+function countdown1(){
+    countdown1IntervalId = setInterval(() => {
+        if(countdown1Diff <= 0){
+            clearInterval(countdown1IntervalId);
+            alert('CONGRATULATIONS!!! As a reward for your patience, now you can mute the clock ticking sound!!!');
+            showMuteButton();
+            
+            countdown2();
+        }
+        countdown1Diff = countdown1Diff-1;
+        countdownMinutes = Math.floor(countdown1Diff / 60);
+        countdownSeconds = countdown1Diff % 60;
+        countdownText.textContent = `${countdownMinutes}m ${countdownSeconds}s`;
+
+    },1000)
+}
+function countdown2(){
+    countdown2IntervalId = setInterval(() => {
+        if(countdown2Diff <= 0){
+            clearInterval(countdown2IntervalId);
+            alert('CONGRATULATIONS!!! As a reward for your patience, now you can send messages!!!');
+            congrats1Trigger = true;
+            countdownText2.innerHTML = "Event in: ";
+            countdown3();
+        }
+        countdown2Diff = countdown2Diff-1;
+        
+        countdownMinutes = Math.floor(countdown2Diff / 60);
+        countdownSeconds = countdown2Diff % 60;
+        countdownText.textContent = `${countdownMinutes}m ${countdownSeconds}s`;
+
+    },1000)
+}
+function countdown3(){
+    countdown3IntervalId = setInterval(() => {
+        if(countdown3Diff <= 0){
+            clearInterval(countdown3IntervalId);
+            if (!styleSwitched) {
+                screenWrapper.classList.add("glitch-effect");
+                document.body.classList.add("crt-flicker");
+                
+
+                setTimeout(() => {
+                    screenWrapper.classList.remove("glitch-effect");
+                    document.body.classList.remove("crt-flicker");
+                    document.body.classList.add("early-internet");
+                    
+                }, 4000);
+                
+
+                styleSwitched = true;
+                queueCenteredMessages([
+                    "maybe i'm too boring to be rewarded with a quick response",
+                    "not interesting enough",
+                    "not exciting anymore",
+                    "too superficial",
+                    "it didn't use to be like that",
+                    "something changed",
+                    "but i can't figure out at what point",
+                    "sometimes i feel like there are things she's not telling me",
+"i can't stop thinking about that diary of hers",
+"she never shows or tells me what's in it",
+"and whenever i ask, she says she doesn't want to talk about it",
+                    "there is nothing more hurtful than hearing 'i don't wanna talk about it'",
+"maybe that's why i feel that there is something going on behind my back",
+"maybe maybe maybe",
+"i'm so tired of maybe",
+"yet i'm not sure if i'm ready to hear answers",
+                    "i would sell my soul to the devil just to bring her sparkle back",
+                    "i don't remember when was the last time she called me",
+                    "i don't remember when was the last time she said she loved me",
+                    "why do i need constant reassurance that i'm loved?",
+                    "maybe there's really something wrong with me",
+                    "why pursue someone who doesn't want your pursuit",
+                    "maybe because existence of love doesn't require reciprocity",
+                    "if god exists, why would he torment me like this?",
+                    "what had i done so wrong that i deserved it?",
+                    "i'm scared"
+                ], 10000, () => {
+                    alert("you've been waiting for so long even the interface got older");
+                    alert("and simpler");
+                });
+            
+            }
+            countdown4();
+        }
+        countdown3Diff = countdown3Diff-1;
+     
+        countdownMinutes = Math.floor(countdown3Diff / 60);
+        countdownSeconds = countdown3Diff % 60;
+        countdownText.textContent = `${countdownMinutes}m ${countdownSeconds}s`;
+
+    },1000)
+}
+
+function countdown4(){
+    countdown4IntervalId = setInterval(() => {
+        if(countdown4Diff <= 0){
+            clearInterval(countdown4IntervalId);
+            status.textContent = 'online';
+            status.style.color = '#6EC531';
+            queueCenteredMessages([
+                "ONLINE!!!",
+                "finally some response is coming",
+                {
+                    text: "right?",
+                    afterAdvance: () => {
+                        status.textContent = 'offline';
+                        status.style.color = '#555';
+                    },
+                    afterAdvanceDelay: 5000
+                },
+                "oh",
+                "it really hurts when i know that she's reading my messages using long press on chat",
+                "i guess she has something more interesting to do",
+                "why do i always feel like i'm a second choice",
+                "she doesn't ask for my opinion",
+"but she used to",
+"she's online but doesn't read my messages",
+"but she used to",
+"she doesn't stay online when i'm typing something",
+"but she used to",
+"it hurts",
+"it hurts to notice little signs of her becoming more distant",
+"i thought i had gotten used to it",
+"but i'm just pretending that i did",
+"it's about all these little things i was used to",
+"all these little things that were making me feel loved",
+"maybe these things just stopped being important to her",
+"i'm so sad when i see it",
+                "but nobody needs me sad, not even her",
+"but i also can't always pretend to be happy",
+                
+                "maybe i want too much",
+                "maybe i am too much",
+                "but her indifference is growing like a cancer inside of me",
+                "slowly but painfully",
+                "one day it will kill me",
+"sometimes i feel like i'm forcing my love on her when she doesn't want it",
+                "and because of that i feel so fucking stupid expressing my love",
+                "i feel so stupid giving her a compliment",
+                "i feel so stupid saving videos to send her later",
+                "i even feel stupid typing this right now",
+                "i'm so tired of feeling stupid",
+                "maybe i am stupid",
+            ], 5000);
+            countdown5();
+        }
+        countdown4Diff = countdown4Diff-1;
+        
+        countdownMinutes = Math.floor(countdown4Diff / 60);
+        countdownSeconds = countdown4Diff % 60;
+        countdownText.textContent = `${countdownMinutes}m ${countdownSeconds}s`;
+
+    },1000)
+}
+
+function countdown5(){
+    countdown5IntervalId = setInterval(() => {
+        if(countdown5Diff <= 0){
+            clearInterval(countdown5IntervalId);
+            status.textContent = 'online';
+            status.style.color = '#6EC531';
+            queueCenteredMessages([
+                'online again',
+                'but this is no guarantee for the response',
+                {
+                    text: 'no fucking way',
+                    beforeShow: () => {
+                        typingBubble.style.display = '';
+                    }
+                },
+                {
+                    text: 'good song',
+                    beforeShow: () => {
+                        typingBubble.style.display = 'none';
+                        showResponse('good song');
+                        clearInterval(intervalId);
+                        status.textContent = 'offline';
+                        status.style.color = '#555';
+                    },
+                    waitBeforeShow: 5000
+                },
+                "sometimes i ask myself",
+                "does she watch the full videos i'm sending her if they're longer than 30 seconds?",
+                "does she forget about me when others are around?",
+                "would she run to me with a hug if she met me right now?",
+                "i really hope she would...",
+                "but it scares me that i don't have an answer",
+                'i thought her response would give me some kind of satisfaction',
+                'ignite the desire for communication',
+                'but the only thing i feel now is humiliation',
+                'humiliation for waiting so long for a...',
+                {
+                    text: 'good song',
+                    afterAdvance: ending
+                }
+            ], 2000);
+
+        }
+        countdown5Diff = countdown5Diff-1;
+        
+        countdownMinutes = Math.floor(countdown5Diff / 60);
+        countdownSeconds = countdown5Diff % 60;
+        countdownText.textContent = `${countdownMinutes}m ${countdownSeconds}s`;
+
+    },1000)
+}
+function timer(){
+    intervalId = setInterval(() => {
+        diff = diff+1;
+        
+        minutes = Math.floor(diff / 60);
+        seconds = diff % 60;
+        timeText.textContent = `${minutes}m ${seconds}s`;
+
+        if (seconds !== lastSecond) {
+            playTick();
+            lastSecond = seconds;
+        }
+
+        
+        
+    
+}, 1000);
+}
+
+input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && minutes < 10){
+        clearInterval(intervalId);
+        alert('sorry, you are not the one who sends here');
+        alert('you are the one who waits');
+        timer();
+    }
+    else if(e.key === "Enter" && congrats1Trigger){
+        alert('but what is the point');
+        alert("nothing's really changed");
+        alert("and it seems like nothing will");
+        congrats1Trigger = false;
+        sendMessage();
+    }
+    else if(e.key === "Enter"){
+        sendMessage();
+    }
+    
+
+});
+
+sendBtn.addEventListener("click", () => {
+    if (minutes < 10){
+        clearInterval(intervalId);
+        alert('sorry, you are not the one who sends here');
+        alert('you are the one who waits');
+        timer();
+    }
+    else if(congrats1Trigger){
+        alert('but what is the point');
+        alert("nothing's really changed");
+        alert("and it seems like nothing will");
+        congrats1Trigger = false;
+        sendMessage();
+    }
+    else{
+        sendMessage();
+    }
+});
+
+function showMuteButton() {
+    muteButton.style.display = "block";
+    moveMuteButton(); 
+}
+
+
+function moveMuteButton() {
+    const maxX = window.innerWidth - muteButton.offsetWidth;
+    const maxY = window.innerHeight - muteButton.offsetHeight;
+    const randX = Math.random() * maxX;
+    const randY = Math.random() * maxY;
+
+    muteButton.style.left = `${randX}px`;
+    muteButton.style.top = `${randY}px`;
+}
+
+muteButton.addEventListener("mouseenter", () => {
+    if (hoverCount < maxHovers) {
+        moveMuteButton();
+        hoverCount++;
+    }
+    if(hoverCount == 2){
+        clearInterval(intervalId);
+        alert('NEVER GIVE UP, KEEP DOING IT');
+        timer();
+    }
+    if(hoverCount == 10){
+        clearInterval(intervalId);
+        alert('ALMOST THERE!!!');
+        timer();
+    }
+});
+
+muteButton.addEventListener("click", () => {
+    if (hoverCount >= maxHovers) {
+        tickSound.volume = 0.2;
+        muteButton.style.display = "none";
+        clearInterval(intervalId);
+        alert('YOU DID IT!!!');
+        alert("but sorry, it was a lie");
+        alert("this button doesn't actually mute the clicking, it just sets its volume to 10%");
+        alert("because you know");
+        alert("you can't just run away from your feelings");
+        alert("all you can do is just make them quieter");
+        alert("until waiting will drive you crazy");
+        timer();
+    }
+});
+function showCenteredMessage(text, startWait) {
+    queueCenteredMessages([text], startWait);
+}
+function clearCenteredMessage() {
+    const centerMessageEl = ensureCenterMessageElement();
+    clearTimeout(centeredMessageTypingTimeoutId);
+    clearTimeout(centeredMessageDelayTimeoutId);
+    stopCenteredMessageNoise();
+    centerMessageEl.textContent = '';
+    centerMessageEl.style.opacity = 0;
+    centerMessageEl.style.animation = '';
+    centeredMessageActive = false;
+    centeredMessageTransitionPending = false;
+    centeredMessageAfterAdvance = null;
+    centeredMessageAfterAdvanceDelay = 0;
+}
+
+function renderCenteredMessage(message) {
+    const centerMessageEl = ensureCenterMessageElement();
+    clearTimeout(centeredMessageTypingTimeoutId);
+    centerMessageEl.textContent = '';
+    if (message.disableEffects) {
+        stopCenteredMessageNoise();
+        centerMessageEl.style.animation = '';
+        centerMessageEl.style.animationIterationCount = '';
+    } else {
+        playCenteredMessageNoise();
+        centerMessageEl.style.animation = 'none';
+        void centerMessageEl.offsetWidth;
+        centerMessageEl.style.animation = `messageShake 0.1s linear, crtFlicker 0.1s linear`;
+        centerMessageEl.style.animationIterationCount = 50;
+    }
+    centerMessageEl.style.opacity = 1;
+    centeredMessageActive = true;
+
+    let i = 0;
+    function type() {
+        if (i < message.text.length) {
+            centerMessageEl.textContent += message.text[i];
+            i++;
+            centeredMessageTypingTimeoutId = setTimeout(type, 40);
+        }
+    }
+
+    type();
+}
+
+function showNextCenteredMessage() {
+    if (centeredMessageQueue.length === 0) {
+        clearCenteredMessage();
+        return;
+    }
+
+    const nextMessage = centeredMessageQueue.shift();
+    if (typeof nextMessage.beforeShow === 'function') {
+        nextMessage.beforeShow();
+    }
+    centeredMessageAfterAdvance = typeof nextMessage.afterAdvance === 'function' ? nextMessage.afterAdvance : null;
+    centeredMessageAfterAdvanceDelay = nextMessage.afterAdvanceDelay || 0;
+
+    if (nextMessage.waitBeforeShow) {
+        const centerMessageEl = ensureCenterMessageElement();
+        centerMessageEl.textContent = '';
+        centerMessageEl.style.opacity = 0;
+        centerMessageEl.style.animation = '';
+        centeredMessageActive = false;
+        centeredMessageTransitionPending = true;
+        centeredMessageDelayTimeoutId = setTimeout(() => {
+            centeredMessageTransitionPending = false;
+            renderCenteredMessage(nextMessage);
+        }, nextMessage.waitBeforeShow);
+        return;
+    }
+
+    centeredMessageTransitionPending = false;
+    renderCenteredMessage(nextMessage);
+}
+
+function queueCenteredMessages(messages, startWait = 0, beforeStart) {
+    clearTimeout(centeredMessageSequenceTimeoutId);
+    centeredMessageSequenceTimeoutId = setTimeout(() => {
+        if (typeof beforeStart === 'function') {
+            beforeStart();
+        }
+
+        const normalizedMessages = messages.map((message) => {
+            if (typeof message === 'string') {
+                return { text: message };
+            }
+
+            return message;
+        });
+
+        centeredMessageQueue = [...centeredMessageQueue, ...normalizedMessages];
+        if (!centeredMessageActive) {
+            showNextCenteredMessage();
+        }
+    }, startWait);
+}
+
+function advanceCenteredMessage() {
+    if (centeredMessageTransitionPending || !centeredMessageActive) {
+        return;
+    }
+
+    if (typeof centeredMessageAfterAdvance === 'function' && centeredMessageAfterAdvanceDelay > 0) {
+        const afterAdvance = centeredMessageAfterAdvance;
+        const afterAdvanceDelay = centeredMessageAfterAdvanceDelay;
+        centeredMessageAfterAdvance = null;
+        centeredMessageAfterAdvanceDelay = 0;
+        centeredMessageTransitionPending = true;
+        centeredMessageDelayTimeoutId = setTimeout(() => {
+            centeredMessageTransitionPending = false;
+            afterAdvance();
+
+            if (centeredMessageQueue.length === 0) {
+                clearCenteredMessage();
+                return;
+            }
+
+            showNextCenteredMessage();
+        }, afterAdvanceDelay);
+        return;
+    }
+
+    if (centeredMessageQueue.length === 0) {
+        const afterAdvance = centeredMessageAfterAdvance;
+        clearCenteredMessage();
+        if (typeof afterAdvance === 'function') {
+            afterAdvance();
+        }
+        return;
+    }
+
+    showNextCenteredMessage();
+}
+
+function showReturnAfterLinkMessages() {
+    if (returnAfterLinkMessagesShown) {
+        return;
+    }
+
+    if (sessionStorage.getItem(returnAfterLinkStorageKey) !== '1') {
+        return;
+    }
+
+    const finalLink = document.querySelector('a[href="https://www.youtube.com/watch?v=FM7ALFsOH4g"]');
+    if (!finalLink || document.visibilityState === 'hidden') {
+        return;
+    }
+
+    returnAfterLinkMessagesShown = true;
+    sessionStorage.removeItem(returnAfterLinkStorageKey);
+    finalLink.remove();
+    document.body.classList.remove('early-internet');
+    queueCenteredMessages(
+        returnAfterLinkMessages.map((text, index) => ({
+            text,
+            disableEffects: true,
+            afterAdvance: index === returnAfterLinkMessages.length - 1 ? fadeToBlackScreen : undefined
+        })),
+        300
+    );
+}
+
+window.addEventListener('pageshow', showReturnAfterLinkMessages);
+window.addEventListener('focus', showReturnAfterLinkMessages);
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        showReturnAfterLinkMessages();
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+        e.preventDefault();
+        advanceCenteredMessage();
+    }
+});
+
+document.addEventListener('mousedown', (e) => {
+    if (e.button === 0) {
+        advanceCenteredMessage();
+    }
+});
+
+function showResponse(text) {
+  const resp = document.createElement('div');
+  chat.appendChild(resp);
+  resp.className = 'message response';
+  resp.id = 'responseBubble';
+  resp.textContent = text;
+  chat.insertBefore(resp, typingBubble);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showResponseEnding(text) {
+    
+    setTimeout(() => {
+        showResponse(text);
+        
+    }, 1000);
+  
+}
+function showCenteredMessageEnding(text, startWait) {
+    setTimeout(() => {
+        
+        const el2 = document.createElement('div');
+        el2.className = 'center-message'
+        screenWrapper.appendChild(el2);
+        el2.style.animation = `messageShakeEnding infinite 0.1s linear, crtFlicker infinite 0.1s linear`;
+        el2.style.opacity = 1;
+        const maxMessageX = window.innerWidth - el2.offsetWidth;
+        const maxMessageY = window.innerHeight - el2.offsetHeight;
+        const randMessageX = Math.random() * maxMessageX;
+        const randMessageY = Math.random() * maxMessageY;
+        el2.style.left = `${randMessageX}px`;
+        el2.style.top = `${randMessageY}px`;
+
+        let i = 0;
+        function type() {
+            if (i < text.length) {
+                el2.textContent += text[i];
+                i++;
+                setTimeout(type, 40);
+            }
+        }
+
+        type();
+    }, startWait);
+    
+}
+
+function ending(){
+    playEndingNoise(9000);
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showResponseEnding('good song');
+    showCenteredMessageEnding('good song',2000);
+    showCenteredMessageEnding('good song',3000);
+    showCenteredMessageEnding('good song',4000);
+    showCenteredMessageEnding('good song',4500);
+    showCenteredMessageEnding('good song',4700);
+    showCenteredMessageEnding('good song',4900);
+    showCenteredMessageEnding('good song',5000);
+    showCenteredMessageEnding('good song',5100);
+    showCenteredMessageEnding('good song',5200);
+    showCenteredMessageEnding('good song',5300);
+    showCenteredMessageEnding('good song',5400);
+    showCenteredMessageEnding('good song',5500);
+    showCenteredMessageEnding('good song',5600);
+    showCenteredMessageEnding('good song',5700);
+    showCenteredMessageEnding('good song',5800);
+    showCenteredMessageEnding('good song',5900);
+    showCenteredMessageEnding('good song',6000);
+    showCenteredMessageEnding('good song',6100);
+    showCenteredMessageEnding('good song',6200);
+    showCenteredMessageEnding('good song',6300);
+    showCenteredMessageEnding('good song',6400);
+    setTimeout(() => { 
+        body = document.getElementsByTagName('body')[0];
+        body.innerHTML = '';
+        const a = document.createElement('a');
+        a.textContent = 'good song';
+        a.href = 'https://www.youtube.com/watch?v=FM7ALFsOH4g';
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.style.position = 'absolute';
+        a.style.top = '50%';
+        a.style.left = '50%';
+        a.style.transform = 'translate(-50%, -50%)';
+        let linkHoverAlertShown = false;
+        a.addEventListener('mouseenter', () => {
+            if (linkHoverAlertShown) {
+                return;
+            }
+
+            linkHoverAlertShown = true;
+            alert("Please, come back to this page after clicking the link and keep the other page opened");
+        });
+        a.addEventListener('click', () => {
+            stopTickingClock();
+            sessionStorage.setItem(returnAfterLinkStorageKey, '1');
+        });
+        body.appendChild(a);
+        timer();
+        alert("and after all");
+        alert("was it really worth waiting?");
+    }, 10000);
+    
+    
+}
+
+timer();
+countdown1();
+
+</script>
+</div>
+</body>
+</html>
